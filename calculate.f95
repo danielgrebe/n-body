@@ -2,7 +2,8 @@ MODULE calculate
     USE constants, ONLY: nl_name, G
     IMPLICIT NONE
     PRIVATE
-    PUBLIC initial_guess, construct_matrix, construct_b, solve, rel_err
+    PUBLIC initial_guess, construct_matrix, construct_b, solve, rel_err, &
+        calc_b_prime
     
 CONTAINS
 
@@ -19,19 +20,20 @@ CONTAINS
 !       END DO
     END SUBROUTINE
 
-    SUBROUTINE construct_matrix(masses, dt, n_body, n, m, A)
+    SUBROUTINE construct_matrix(masses, dt, n_body, n, m, A, x0, xf)
         INTEGER :: n_body, n, m, i, offset, body_idx
-        DOUBLE PRECISION :: masses(n_body), dt, A(m,m), mass
+        DOUBLE PRECISION :: masses(n_body), dt, A(m,m), mass, x0(3*n_body), &
+            xf(3*n_body)
         A = 0
         offset = 3*n_body*n
         !initialize boundary conditions
         DO i=1,n_body*3
-            A(i,i) = 1
+            A(i,i) = 1/x0(i)
             A(i+offset,i) = 1/dt
             A(i+offset,i+3*n_body) = -1/dt
         END DO
         DO i=n_body*(n-1)*3+1,n*n_body*3
-            A(i,i) = 1
+            A(i,i) = 1/xf(i-(n-1)*3*n_body)
             A(i+offset,i) = -1/dt
             A(i+offset,i-3*n_body) = 1/dt
         END DO
@@ -67,8 +69,10 @@ CONTAINS
         DOUBLE PRECISION, EXTERNAL :: DNRM2
         b = 0
         ! boundary condition
-        b(1:3*n_body) = u_bar(1:3*n_body)
-        b(3*n_body*(n-1)+1:3*n_body*n) = u_bar(3*n_body*(n-1)+1:3*n_body*n)
+!       b(1:3*n_body) = u_bar(1:3*n_body)
+        b(1:3*n_body) = 1
+!       b(3*n_body*(n-1)+1:3*n_body*n) = u_bar(3*n_body*(n-1)+1:3*n_body*n)
+        b(3*n_body*(n-1)+1:3*n_body*n) = 1
 
         ! gravitational attraction
         DO i = n_body*3+1, 3*n_body*(n-1), 3
@@ -91,7 +95,24 @@ CONTAINS
                 END IF
             END DO
         END DO
+    END SUBROUTINE
 
+
+    SUBROUTINE calc_b_prime(u_bar, masses, n_body, m, n, b, h_u, b_prime)
+        INTEGER :: n_body, m, n, body_idx, t_idx, i, k, coord_body_idx
+        DOUBLE PRECISION :: u_bar(m), masses(n_body), b(m), &
+            h_u, b_prime(m,m), b_star(m), u_prime(m)
+        DOUBLE PRECISION, EXTERNAL :: DNRM2
+        !$OMP PARALLEL
+        !$OMP DO
+        DO i = 1,m
+            u_prime = u_bar
+            u_prime(i) = u_prime(i) + h_u
+            CALL construct_b(u_prime, masses, n_body, m, n, b_star)
+            b_prime(:,i) = (b_star - b)/h_u
+        END DO
+        !$OMP END DO
+        !$OMP END PARALLEL
 
     END SUBROUTINE
 

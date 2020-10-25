@@ -1,11 +1,13 @@
 ! config namelist
 &config
 	n_body = 10
-	dt =  1800.0
+	dt =   600.0
 	t0 = 0
 	tf = 86400.0
-	eps = 1e-15
-	relax = 0.1
+	eps = 0.1
+	relax = 0.001
+	gmma = 1.
+	d_u = 1e4
 /
 
 &init

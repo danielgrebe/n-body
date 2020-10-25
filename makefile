@@ -1,3 +1,5 @@
+OMP_NUM_THREADS=192
+export OMP_NUM_THREADS
 
 OBJECTS = constants.o \
 		  io.o \
@@ -14,7 +16,7 @@ MODULES = constants.mod \
 # -g generates extra debugging information usable by GDB
 # -03 level 3 optimisation for compling code
 
-FFLAGS = -g  -Wall -fcheck=all -llapack -lblas
+FFLAGS = -g  -O3 -Wall -fcheck=all -llapack -lblas -fopenmp
 
 .PHONY: run clean
 

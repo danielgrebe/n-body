@@ -7,10 +7,10 @@ MODULE io
     
 CONTAINS
 
-    SUBROUTINE read_config(n_body, dt, t0, tf, eps, relax)
+    SUBROUTINE read_config(n_body, dt, t0, tf, eps, relax, d_u, gmma)
         INTEGER :: n_body
-        DOUBLE PRECISION :: dt, t0, tf, eps, relax
-        NAMELIST /config/ n_body, dt, t0, tf, eps, relax
+        DOUBLE PRECISION :: dt, t0, tf, eps, relax, d_u, gmma
+        NAMELIST /config/ n_body, dt, t0, tf, eps, relax, d_u, gmma
         OPEN(10, FILE=nl_name)
         READ(10, NML=config)
         WRITE(*, NML=config)
